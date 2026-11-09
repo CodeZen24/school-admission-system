@@ -74,3 +74,15 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Compose configuration
+        run: docker compose config
+
+      - name: Build Docker images
+        run: docker compose build
