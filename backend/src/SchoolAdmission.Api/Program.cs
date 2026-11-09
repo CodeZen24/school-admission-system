@@ -3,6 +3,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Configuration;
 using SchoolAdmission.Api.Data;
+using SchoolAdmission.Api.Features.Classes;
 using SchoolAdmission.Api.Infrastructure.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,8 @@ builder.Services.AddDbContext<SchoolAdmissionDbContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseNpgsql(connectionString);
 });
+
+builder.Services.AddScoped<IClassesService, ClassesService>();
 
 builder.Services
     .AddOptions<AdmissionOptions>()

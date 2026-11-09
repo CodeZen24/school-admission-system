@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Data;
 using Testcontainers.PostgreSql;
@@ -42,5 +44,14 @@ public sealed class PostgreSqlDatabaseFixture : IAsyncLifetime
             .Options;
 
         return new SchoolAdmissionDbContext(options);
+    }
+
+    public WebApplicationFactory<Program> CreateWebApplicationFactory()
+    {
+        return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("ConnectionStrings:DefaultConnection", ConnectionString);
+            builder.UseEnvironment("Development");
+        });
     }
 }
