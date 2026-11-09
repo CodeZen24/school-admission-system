@@ -19,117 +19,153 @@ export function ClassCard({
   onHoldExpired,
 }: ClassCardProps) {
   const { totalSeats, heldSeats, confirmedSeats, availableSeats } = classItem;
-
-  const confirmedPct = totalSeats > 0 ? (confirmedSeats / totalSeats) * 100 : 0;
-  const heldPct = totalSeats > 0 ? (heldSeats / totalSeats) * 100 : 0;
-
+  const confirmedPct = totalSeats ? (confirmedSeats / totalSeats) * 100 : 0;
+  const heldPct = totalSeats ? (heldSeats / totalSeats) * 100 : 0;
   const hasActiveHold =
     studentHold?.status === 'HELD' &&
     new Date(studentHold.expiresAt).getTime() > Date.now();
   const hasConfirmed = studentHold?.status === 'CONFIRMED';
   const isFull = availableSeats <= 0;
-
-  let buttonText = 'Apply for Seat';
-  let buttonDisabled = false;
-  let buttonTitle = '';
-  let buttonStyle = 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm';
-
+  let label = 'Apply for seat';
+  let disabled = false;
+  let title = '';
+  let buttonClass =
+    'bg-[#0f766e] text-white shadow-[0_5px_14px_rgba(15,118,110,0.18)] hover:bg-[#0b625b]';
   if (hasConfirmed) {
-    buttonText = '✓ Enrolled';
-    buttonDisabled = true;
-    buttonTitle = 'You are already enrolled in this class.';
-    buttonStyle = 'bg-emerald-100 text-emerald-800 cursor-default';
+    label = 'Admission confirmed';
+    disabled = true;
+    title = 'You are already enrolled in this class.';
+    buttonClass = 'bg-[#e1f2e7] text-[#28764d]';
   } else if (hasActiveHold) {
-    buttonText = '⏱ Seat Reserved';
-    buttonDisabled = true;
-    buttonTitle = 'You already have an active hold in this class.';
-    buttonStyle = 'bg-amber-100 text-amber-800 cursor-default';
+    label = 'Seat reserved';
+    disabled = true;
+    title = 'You already have an active hold in this class.';
+    buttonClass = 'bg-[#fff0d8] text-[#94600f]';
   } else if (isFull) {
-    buttonText = 'Class Full';
-    buttonDisabled = true;
-    buttonTitle = 'No seats available.';
-    buttonStyle = 'bg-slate-100 text-slate-400 cursor-not-allowed';
+    label = 'No seats available';
+    disabled = true;
+    title = 'No seats are currently available.';
+    buttonClass = 'bg-[#edf0ee] text-[#85908b]';
   } else if (!isStudentIdValid) {
-    buttonText = 'Invalid Student ID';
-    buttonDisabled = true;
-    buttonTitle = 'Enter a valid 17-digit student ID above to apply.';
-    buttonStyle = 'bg-slate-100 text-slate-400 cursor-not-allowed';
+    label = 'Enter a valid student ID';
+    disabled = true;
+    title = 'Enter a valid 17-digit student ID above to apply.';
+    buttonClass = 'bg-[#edf0ee] text-[#85908b]';
   } else if (isApplying) {
-    buttonText = 'Reserving...';
-    buttonDisabled = true;
-    buttonStyle = 'bg-indigo-400 text-white cursor-wait';
+    label = 'Reserving seat…';
+    disabled = true;
+    buttonClass = 'bg-[#54a99f] text-white';
   }
+  const status = hasConfirmed
+    ? 'Confirmed'
+    : hasActiveHold
+      ? 'Hold active'
+      : isFull
+        ? 'Full'
+        : 'Open';
+  const statusClass = hasConfirmed
+    ? 'bg-[#e1f2e7] text-[#28764d]'
+    : hasActiveHold
+      ? 'bg-[#fff0d8] text-[#94600f]'
+      : isFull
+        ? 'bg-[#edf0ee] text-[#69746f]'
+        : 'bg-[#e7f5f1] text-[#0f766e]';
 
   return (
-    <article className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+    <article className="flex min-h-[22rem] flex-col justify-between rounded-2xl bg-white p-5 shadow-[0_2px_16px_rgba(28,44,38,0.06)] ring-1 ring-[#e2e9e5] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(28,44,38,0.09)]">
       <div>
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <h3 className="text-base font-bold text-slate-900 leading-snug">{classItem.name}</h3>
-          {hasConfirmed && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
-              Enrolled
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.06em] ${statusClass}`}
+          >
+            {status}
+          </span>
+          {hasActiveHold && studentHold ? (
+            <HoldCountdownBadge
+              expiresAt={studentHold.expiresAt}
+              onExpired={onHoldExpired}
+            />
+          ) : (
+            <span className="text-[11px] font-semibold text-[#7a8781]">
+              {availableSeats} seat{availableSeats === 1 ? '' : 's'} free
             </span>
           )}
-          {hasActiveHold && studentHold && (
-            <div className="shrink-0">
-              <HoldCountdownBadge
-                expiresAt={studentHold.expiresAt}
-                onExpired={onHoldExpired}
-              />
-            </div>
-          )}
         </div>
-
-        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden flex mb-4">
-          <div
-            className="bg-emerald-500 h-full transition-all duration-300"
-            style={{ width: `${confirmedPct}%` }}
-            title={`Confirmed: ${confirmedSeats}`}
-          />
-          <div
-            className="bg-amber-400 h-full transition-all duration-300"
-            style={{ width: `${heldPct}%` }}
-            title={`Held: ${heldSeats}`}
-          />
-        </div>
-
-        <div className="grid grid-cols-4 gap-2 text-center mb-5">
-          <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-            <div className="text-[10px] uppercase font-bold text-slate-500">Total</div>
-            <div className="text-sm font-bold text-slate-800">{totalSeats}</div>
-          </div>
-          <div className="bg-amber-50/60 rounded-lg p-2 border border-amber-100">
-            <div className="text-[10px] uppercase font-bold text-amber-700">Held</div>
-            <div className="text-sm font-bold text-amber-800">{heldSeats}</div>
-          </div>
-          <div className="bg-emerald-50/60 rounded-lg p-2 border border-emerald-100">
-            <div className="text-[10px] uppercase font-bold text-emerald-700">Confirmed</div>
-            <div className="text-sm font-bold text-emerald-800">{confirmedSeats}</div>
+        <h3 className="text-base font-extrabold leading-snug tracking-tight text-[#17201e]">
+          {classItem.name}
+        </h3>
+        <p className="mt-1 text-xs font-medium text-[#718078]">
+          Current admission capacity
+        </p>
+        <div className="mt-6">
+          <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-[#68756f]">
+            <span>Seat allocation</span>
+            <span>
+              {Math.round((1 - availableSeats / totalSeats) * 100)}% occupied
+            </span>
           </div>
           <div
-            className={`rounded-lg p-2 border ${
-              availableSeats === 0
-                ? 'bg-rose-50/60 border-rose-100 text-rose-800'
-                : 'bg-indigo-50/60 border-indigo-100 text-indigo-800'
-            }`}
+            className="flex h-2.5 overflow-hidden rounded-full bg-[#e8eeeb]"
+            aria-label={`${confirmedSeats} confirmed and ${heldSeats} held seats`}
           >
-            <div className="text-[10px] uppercase font-bold">Available</div>
-            <div className="text-sm font-bold">{availableSeats}</div>
+            <span
+              className="bg-[#28764d] transition-all"
+              style={{ width: `${confirmedPct}%` }}
+              title={`${confirmedSeats} confirmed`}
+            />
+            <span
+              className="bg-[#d3942c] transition-all"
+              style={{ width: `${heldPct}%` }}
+              title={`${heldSeats} held`}
+            />
           </div>
         </div>
+        <div className="mt-6 flex items-end gap-2">
+          <strong
+            className={`text-3xl tracking-tight ${availableSeats ? 'text-[#0f766e]' : 'text-[#7b8580]'}`}
+          >
+            {availableSeats}
+          </strong>
+          <span className="mb-1 text-xs font-bold text-[#53615b]">
+            seats available
+          </span>
+        </div>
+        <dl className="mt-4 grid grid-cols-3 divide-x divide-[#dfe7e3] rounded-xl bg-[#f3f6f4] py-3 text-center">
+          <div>
+            <dt className="text-[9px] font-extrabold uppercase tracking-[0.07em] text-[#7b8781]">
+              Total
+            </dt>
+            <dd className="mt-1 text-sm font-extrabold text-[#293631]">
+              {totalSeats}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[9px] font-extrabold uppercase tracking-[0.07em] text-[#a46d18]">
+              Held
+            </dt>
+            <dd className="mt-1 text-sm font-extrabold text-[#94600f]">
+              {heldSeats}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[9px] font-extrabold uppercase tracking-[0.07em] text-[#28764d]">
+              Confirmed
+            </dt>
+            <dd className="mt-1 text-sm font-extrabold text-[#28764d]">
+              {confirmedSeats}
+            </dd>
+          </div>
+        </dl>
       </div>
-
-      <div>
-        <button
-          type="button"
-          className={`w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-150 ${buttonStyle}`}
-          disabled={buttonDisabled}
-          title={buttonTitle}
-          onClick={() => onApply(classItem.id)}
-        >
-          {buttonText}
-        </button>
-      </div>
+      <button
+        type="button"
+        className={`mt-6 w-full rounded-xl px-4 py-3 text-sm font-extrabold transition disabled:cursor-not-allowed ${buttonClass}`}
+        disabled={disabled}
+        title={title}
+        onClick={() => onApply(classItem.id)}
+      >
+        {label}
+      </button>
     </article>
   );
 }

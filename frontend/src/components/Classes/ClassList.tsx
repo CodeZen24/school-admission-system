@@ -20,44 +20,45 @@ export function ClassList({
   onApply,
   onHoldExpired,
 }: ClassListProps) {
-  if (isLoading && classes.length === 0) {
+  if (isLoading && classes.length === 0)
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center shadow-sm">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mb-3" />
-        <p className="text-sm text-slate-500 font-medium">Loading admission classes...</p>
-      </div>
-    );
-  }
-
-  if (classes.length === 0) {
-    return (
-      <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center shadow-sm">
-        <div className="text-3xl mb-2">📚</div>
-        <h3 className="text-base font-semibold text-slate-800 mb-1">No Classes Created Yet</h3>
-        <p className="text-sm text-slate-500">
-          Use the &quot;+ Create New Class&quot; button above to create the first admission class.
+      <div className="rounded-2xl bg-white p-12 text-center shadow-[0_2px_16px_rgba(28,44,38,0.06)] ring-1 ring-[#e2e9e5]">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#0f766e] border-t-transparent" />
+        <p className="text-sm font-bold text-[#617069]">
+          Loading admission classes...
         </p>
       </div>
     );
-  }
-
+  if (classes.length === 0)
+    return (
+      <div className="rounded-2xl border border-dashed border-[#b9cbc3] bg-white/70 p-12 text-center">
+        <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-[#e7f5f1] text-sm font-extrabold text-[#0f766e]">
+          +
+        </div>
+        <h3 className="mb-1 text-base font-extrabold text-[#24302b]">
+          No classes created yet
+        </h3>
+        <p className="text-sm text-[#718078]">
+          Use the “Create new class” button above to add the first admission
+          class.
+        </p>
+      </div>
+    );
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-      {classes.map(classItem => {
-        const matchingHold = studentHolds.find(h => h.classId === classItem.id);
-
-        return (
-          <ClassCard
-            key={classItem.id}
-            classItem={classItem}
-            studentHold={matchingHold}
-            isApplying={applyingClassId === classItem.id}
-            isStudentIdValid={isStudentIdValid}
-            onApply={onApply}
-            onHoldExpired={onHoldExpired}
-          />
-        );
-      })}
+    <div className="mb-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {classes.map((classItem) => (
+        <ClassCard
+          key={classItem.id}
+          classItem={classItem}
+          studentHold={studentHolds.find(
+            (hold) => hold.classId === classItem.id,
+          )}
+          isApplying={applyingClassId === classItem.id}
+          isStudentIdValid={isStudentIdValid}
+          onApply={onApply}
+          onHoldExpired={onHoldExpired}
+        />
+      ))}
     </div>
   );
 }

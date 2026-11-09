@@ -19,77 +19,75 @@ export function StudentIdentityBar({
   isValid,
   validationError,
 }: StudentIdentityBarProps) {
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onStudentIdChange(e.target.value);
-  };
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) =>
+    onStudentIdChange(event.target.value);
 
   return (
-    <header className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-        <div className="flex-1">
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
-              Active Student Identity
-            </span>
-            <span className="text-xs text-slate-500">
-              Attached to requests via <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono">X-Student-Id</code>
+    <section
+      className="mb-8 rounded-2xl bg-white p-5 shadow-[0_2px_16px_rgba(28,44,38,0.06)] ring-1 ring-[#e2e9e5] sm:p-6"
+      aria-labelledby="identity-heading"
+    >
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <h2
+              id="identity-heading"
+              className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#44514c]"
+            >
+              Active student identity
+            </h2>
+            <span className="rounded-full bg-[#e7f5f1] px-2.5 py-1 text-[10px] font-bold text-[#0f766e]">
+              Attached via X-Student-Id
             </span>
           </div>
-
-          <div className="relative max-w-md">
+          <div
+            className={`flex max-w-xl items-center rounded-xl border px-3 transition ${isValid ? 'border-[#b8dfd4] bg-[#f8fcfa] focus-within:border-[#0f766e] focus-within:ring-4 focus-within:ring-[#d9f0ea]' : 'border-[#f0c98e] bg-[#fffaf2] focus-within:border-[#b97913] focus-within:ring-4 focus-within:ring-[#fff0d8]'}`}
+          >
+            <span
+              className="mr-2 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#e7f5f1] text-xs font-extrabold text-[#0f766e]"
+              aria-hidden="true"
+            >
+              ID
+            </span>
             <input
               id="student-id-input"
               type="text"
-              className={`w-full font-mono text-sm px-3.5 py-2 rounded-lg border outline-none transition-all pr-16 ${
-                isValid
-                  ? 'border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-emerald-50/20'
-                  : 'border-amber-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-100 bg-amber-50/20'
-              }`}
+              inputMode="numeric"
+              className="min-w-0 flex-1 bg-transparent py-3 font-mono text-sm tracking-wide text-[#17201e] outline-none placeholder:text-[#98a39e]"
               value={studentId}
               onChange={handleChange}
               maxLength={17}
-              placeholder="17 ASCII digits"
+              placeholder="17-digit student ID"
               aria-describedby="student-id-feedback"
               aria-invalid={!isValid}
             />
             <span
-              className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono font-medium px-1.5 py-0.5 rounded ${
-                studentId.length === 17
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-amber-100 text-amber-800'
-              }`}
+              className={`ml-2 shrink-0 rounded-full px-2 py-1 font-mono text-[10px] font-bold ${studentId.length === 17 ? 'bg-[#e1f2e7] text-[#28764d]' : 'bg-[#fff0d8] text-[#9a5d09]'}`}
             >
               {studentId.length}/17
             </span>
           </div>
-
-          <div id="student-id-feedback" className="mt-1.5 text-xs">
-            {validationError ? (
-              <span className="text-amber-700 font-medium flex items-center gap-1">
-                ⚠️ {validationError}
-              </span>
-            ) : (
-              <span className="text-emerald-700 font-medium flex items-center gap-1">
-                ✓ Valid 17-digit student identity ready for seat reservations
-              </span>
-            )}
-          </div>
+          <p
+            id="student-id-feedback"
+            className={`mt-2 flex items-center gap-1.5 text-xs font-semibold ${validationError ? 'text-[#a86412]' : 'text-[#28764d]'}`}
+          >
+            <span aria-hidden="true">{validationError ? '!' : '✓'}</span>
+            {validationError ||
+              'Valid 17-digit identity ready for seat reservations'}
+          </p>
         </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-          <span className="text-xs font-medium text-slate-500">Switch Demo Student:</span>
-          <div className="flex items-center gap-2">
-            {PRESET_STUDENTS.map(preset => {
-              const isSelected = studentId === preset.id;
+        <div className="lg:text-right">
+          <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#718078]">
+            Switch demo profile
+          </p>
+          <div className="inline-flex rounded-xl bg-[#eef2ef] p-1">
+            {PRESET_STUDENTS.map((preset) => {
+              const selected = studentId === preset.id;
               return (
                 <button
                   key={preset.id}
                   type="button"
-                  className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                  }`}
+                  className={`rounded-lg px-3 py-2 text-xs font-bold transition sm:px-4 ${selected ? 'bg-[#17201e] text-white shadow-sm' : 'text-[#66736d] hover:bg-white hover:text-[#17201e]'}`}
                   onClick={() => onStudentIdChange(preset.id)}
                   title={`Switch to ${preset.label} (${preset.id})`}
                 >
@@ -100,6 +98,6 @@ export function StudentIdentityBar({
           </div>
         </div>
       </div>
-    </header>
+    </section>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { StudentHoldResponse } from '../../api/types';
 import { useCountdown } from '../../hooks/useCountdown';
 
@@ -9,7 +9,6 @@ interface MyApplicationsListProps {
   onCancel: (holdId: string) => Promise<void>;
   onHoldExpired?: () => void;
 }
-
 interface ApplicationRowProps {
   hold: StudentHoldResponse;
   onConfirm: (holdId: string) => Promise<void>;
@@ -23,115 +22,108 @@ function ApplicationRow({
   onCancel,
   onHoldExpired,
 }: ApplicationRowProps) {
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const isHeld = hold.status === 'HELD';
-  const { remainingSeconds, formatted, isExpired } = useCountdown(hold.expiresAt);
-
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const { remainingSeconds, formatted, isExpired } = useCountdown(
+    hold.expiresAt,
+  );
+  const held = hold.status === 'HELD';
+  const status = held && isExpired ? 'EXPIRED' : hold.status;
+  const actionable = held && !isExpired && remainingSeconds > 0;
   useEffect(() => {
-    if (isHeld && isExpired && onHoldExpired) {
-      onHoldExpired();
-    }
-  }, [isHeld, isExpired, onHoldExpired]);
-
-  const effectiveStatus = isHeld && isExpired ? 'EXPIRED' : hold.status;
-  const canAct = isHeld && !isExpired && remainingSeconds > 0;
-
-  const handleConfirm = async () => {
-    if (!canAct || isConfirming) return;
-    setIsConfirming(true);
+    if (held && isExpired) onHoldExpired?.();
+  }, [held, isExpired, onHoldExpired]);
+  const badge = {
+    HELD: 'bg-[#fff0d8] text-[#94600f]',
+    CONFIRMED: 'bg-[#e1f2e7] text-[#28764d]',
+    CANCELLED: 'bg-[#edf0ee] text-[#65716c]',
+    EXPIRED: 'bg-[#fbe7e5] text-[#a64b45]',
+  }[status];
+  const symbol = { HELD: '○', CONFIRMED: '✓', CANCELLED: '–', EXPIRED: '!' }[
+    status
+  ];
+  const confirm = async () => {
+    if (!actionable || confirming) return;
+    setConfirming(true);
     try {
       await onConfirm(hold.holdId);
     } finally {
-      setIsConfirming(false);
+      setConfirming(false);
     }
   };
-
-  const handleCancel = async () => {
-    if (!canAct || isCancelling) return;
-    setIsCancelling(true);
+  const cancel = async () => {
+    if (!actionable || cancelling) return;
+    setCancelling(true);
     try {
       await onCancel(hold.holdId);
     } finally {
-      setIsCancelling(false);
+      setCancelling(false);
     }
   };
-
-  const statusBadge = {
-    HELD: 'bg-amber-100 text-amber-800 border-amber-200',
-    CONFIRMED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    CANCELLED: 'bg-slate-100 text-slate-600 border-slate-200',
-    EXPIRED: 'bg-rose-100 text-rose-800 border-rose-200',
-  }[effectiveStatus] || 'bg-slate-100 text-slate-700';
-
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-      <td className="py-3 px-4">
-        <div className="font-semibold text-slate-900">{hold.className}</div>
-        <div className="text-xs font-mono text-slate-400" title={hold.holdId}>
-          {hold.holdId.substring(0, 8)}...
-        </div>
-      </td>
-      <td className="py-3 px-4">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusBadge}`}>
-          {effectiveStatus}
+    <li className="flex flex-col gap-4 px-5 py-5 transition hover:bg-[#f8fbf9] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-extrabold ${badge}`}
+        >
+          {symbol}
         </span>
-      </td>
-      <td className="py-3 px-4">
-        {isHeld ? (
-          isExpired ? (
-            <span className="text-xs text-rose-600 font-medium">Expired</span>
-          ) : (
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-extrabold text-[#24302b]">{hold.className}</h3>
             <span
-              className={`text-xs font-mono font-medium ${
-                remainingSeconds < 120 ? 'text-rose-600 font-bold animate-pulse' : 'text-amber-800'
-              }`}
+              className={`rounded-full px-2 py-1 text-[9px] font-extrabold tracking-[0.06em] ${badge}`}
             >
-              ⏱ {formatted}
+              {status}
             </span>
-          )
-        ) : (
-          <span className="text-xs text-slate-400">—</span>
-        )}
-      </td>
-      <td className="py-3 px-4 text-xs text-slate-500">
-        {new Date(hold.createdAt).toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        })}
-      </td>
-      <td className="py-3 px-4 text-right">
-        {canAct ? (
-          <div className="flex items-center justify-end space-x-2">
-            <button
-              type="button"
-              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm disabled:opacity-50"
-              onClick={handleConfirm}
-              disabled={isConfirming || isCancelling}
-              title="Confirm admission and simulate fee payment"
-            >
-              {isConfirming ? 'Confirming...' : '💳 Confirm / Pay Fee'}
-            </button>
-            <button
-              type="button"
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 transition-colors disabled:opacity-50"
-              onClick={handleCancel}
-              disabled={isConfirming || isCancelling}
-              title="Cancel seat reservation"
-            >
-              {isCancelling ? 'Cancelling...' : 'Cancel'}
-            </button>
           </div>
-        ) : (
-          <span className="text-xs font-medium text-slate-400">
-            {effectiveStatus === 'CONFIRMED' && '✓ Enrolled'}
-            {effectiveStatus === 'CANCELLED' && 'Cancelled'}
-            {effectiveStatus === 'EXPIRED' && 'Expired'}
-          </span>
-        )}
-      </td>
-    </tr>
+          <p
+            className="mt-1 text-xs font-mono text-[#75817b]"
+            title={hold.holdId}
+          >
+            Reservation {hold.holdId.substring(0, 8)}… · Applied{' '}
+            {new Date(hold.createdAt).toLocaleString()}
+          </p>
+          {status === 'HELD' && (
+            <p
+              className={`mt-2 text-xs font-bold ${remainingSeconds < 120 ? 'text-[#b34a3f]' : 'text-[#94600f]'}`}
+            >
+              Time to confirm: {formatted}
+            </p>
+          )}
+          {status === 'CONFIRMED' && (
+            <p className="mt-2 text-xs font-semibold text-[#28764d]">
+              Your seat is confirmed.
+            </p>
+          )}
+          {status === 'EXPIRED' && (
+            <p className="mt-2 text-xs font-semibold text-[#a64b45]">
+              The hold expired and the seat was released.
+            </p>
+          )}
+        </div>
+      </div>
+      {actionable && (
+        <div className="flex shrink-0 gap-2 sm:pl-4">
+          <button
+            type="button"
+            className="rounded-xl bg-[#0f766e] px-3.5 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-[#0b625b] disabled:opacity-60"
+            onClick={confirm}
+            disabled={confirming || cancelling}
+          >
+            {confirming ? 'Confirming…' : 'Confirm payment'}
+          </button>
+          <button
+            type="button"
+            className="rounded-xl bg-[#f3f6f4] px-3.5 py-2.5 text-xs font-extrabold text-[#68756f] transition hover:bg-[#e5ebe7] disabled:opacity-60"
+            onClick={cancel}
+            disabled={confirming || cancelling}
+          >
+            {cancelling ? 'Cancelling…' : 'Cancel'}
+          </button>
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -143,53 +135,54 @@ export function MyApplicationsList({
   onHoldExpired,
 }: MyApplicationsListProps) {
   return (
-    <section className="mb-12">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-slate-900">My Seat Applications & Reservations</h2>
-        <p className="text-xs text-slate-500">
-          History for active student identity (synced via <code>X-Student-Id</code>)
-        </p>
+    <section className="mb-8" aria-labelledby="applications-heading">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#0f766e]">
+            Application history
+          </p>
+          <h2
+            id="applications-heading"
+            className="text-2xl font-extrabold tracking-tight text-[#17201e]"
+          >
+            My applications &amp; reservations
+          </h2>
+          <p className="mt-1 text-xs font-medium text-[#718078]">
+            The records below belong to the active student identity.
+          </p>
+        </div>
+        {holds.length > 0 && (
+          <span className="hidden rounded-full bg-white px-3 py-1.5 text-[10px] font-bold text-[#65716c] ring-1 ring-[#e2e9e5] sm:block">
+            {holds.length} record{holds.length === 1 ? '' : 's'}
+          </span>
+        )}
       </div>
-
       {isLoading && holds.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center shadow-sm">
-          <p className="text-sm text-slate-500">Loading student applications...</p>
+        <div className="rounded-2xl bg-white p-8 text-center text-sm font-semibold text-[#718078] shadow-sm ring-1 ring-[#e2e9e5]">
+          Loading applications…
         </div>
       ) : holds.length === 0 ? (
-        <div className="bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center shadow-sm">
-          <div className="text-2xl mb-1">📋</div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-1">No Applications Yet</h3>
-          <p className="text-xs text-slate-500">
-            Select an available class above and click &quot;Apply for Seat&quot; to begin.
+        <div className="rounded-2xl border border-dashed border-[#b9cbc3] bg-white/70 p-10 text-center">
+          <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-[#e7f5f1] text-sm font-extrabold text-[#0f766e]">
+            +
+          </div>
+          <h3 className="font-extrabold text-[#24302b]">No applications yet</h3>
+          <p className="mt-1 text-sm text-[#718078]">
+            Choose an available class above to reserve a seat.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-4">Class</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Countdown</th>
-                  <th className="py-3 px-4">Applied At</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holds.map(hold => (
-                  <ApplicationRow
-                    key={hold.holdId}
-                    hold={hold}
-                    onConfirm={onConfirm}
-                    onCancel={onCancel}
-                    onHoldExpired={onHoldExpired}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <ul className="divide-y divide-[#e7ece9] overflow-hidden rounded-2xl bg-white shadow-[0_2px_16px_rgba(28,44,38,0.06)] ring-1 ring-[#e2e9e5]">
+          {holds.map((hold) => (
+            <ApplicationRow
+              key={hold.holdId}
+              hold={hold}
+              onConfirm={onConfirm}
+              onCancel={onCancel}
+              onHoldExpired={onHoldExpired}
+            />
+          ))}
+        </ul>
       )}
     </section>
   );

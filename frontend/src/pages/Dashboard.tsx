@@ -10,7 +10,8 @@ import { ClassList } from '../components/Classes/ClassList';
 import { MyApplicationsList } from '../components/Holds/MyApplicationsList';
 
 export function Dashboard() {
-  const { studentId, setStudentId, isValid, validationError } = useStudentIdentity();
+  const { studentId, setStudentId, isValid, validationError } =
+    useStudentIdentity();
 
   const [classes, setClasses] = useState<AdmissionClass[]>([]);
   const [studentHolds, setStudentHolds] = useState<StudentHoldResponse[]>([]);
@@ -62,17 +63,22 @@ export function Dashboard() {
 
   usePolling(refreshAll, 4000, true);
 
-  const handleClassCreated = useCallback((newClass: AdmissionClass) => {
-    setClasses(prev => [newClass, ...prev]);
-    void refreshClasses();
-  }, [refreshClasses]);
+  const handleClassCreated = useCallback(
+    (newClass: AdmissionClass) => {
+      setClasses((prev) => [newClass, ...prev]);
+      void refreshClasses();
+    },
+    [refreshClasses],
+  );
 
   const handleApply = async (classId: string) => {
     if (!isValid) {
       setNotification({
         type: 'warning',
         title: 'Invalid Student ID',
-        message: validationError || 'Please provide a valid 17-digit student ID above.',
+        message:
+          validationError ||
+          'Please provide a valid 17-digit student ID above.',
       });
       return;
     }
@@ -85,14 +91,16 @@ export function Dashboard() {
       setNotification({
         type: 'success',
         title: 'Seat Reserved!',
-        message: 'Your 10-minute reservation hold is active. Confirm simulated payment below to finalize enrollment.',
+        message:
+          'Your 10-minute reservation hold is active. Confirm simulated payment below to finalize enrollment.',
       });
       await refreshAll();
     } catch (err) {
       if (err instanceof ApiError) {
         setNotification({
           type: 'error',
-          title: err.status === 409 ? 'Reservation Conflict' : 'Application Failed',
+          title:
+            err.status === 409 ? 'Reservation Conflict' : 'Application Failed',
           message: err.message,
         });
       } else {
@@ -115,7 +123,8 @@ export function Dashboard() {
       setNotification({
         type: 'success',
         title: 'Admission Confirmed!',
-        message: 'Your fee payment was simulated and your seat is now permanently confirmed.',
+        message:
+          'Your fee payment was simulated and your seat is now permanently confirmed.',
       });
       await refreshAll();
     } catch (err) {
@@ -143,7 +152,8 @@ export function Dashboard() {
       setNotification({
         type: 'info',
         title: 'Reservation Cancelled',
-        message: 'Your seat hold has been released and the capacity is available for other students.',
+        message:
+          'Your seat hold has been released and the capacity is available for other students.',
       });
       await refreshAll();
     } catch (err) {
@@ -157,7 +167,8 @@ export function Dashboard() {
         setNotification({
           type: 'error',
           title: 'Error',
-          message: 'An unexpected error occurred while cancelling the reservation.',
+          message:
+            'An unexpected error occurred while cancelling the reservation.',
         });
       }
       void refreshAll();
@@ -165,24 +176,35 @@ export function Dashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight sm:text-3xl">
-            School Admission Portal
+          <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#0f766e]">
+            Admission registry
+          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#17201e] sm:text-4xl">
+            Admission &amp; seat allocation
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Real-time seat reservation, concurrency-safe holds, and admission workflow
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#68766f]">
+            Reserve a place in an available class, then confirm the simulated
+            fee before the hold expires.
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-xs text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Live sync active</span>
+        <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-[#e2e9e5]">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#0f9b86]" />
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#75817b]">
+              Registry status
+            </p>
+            <p className="text-xs font-extrabold text-[#24302b]">
+              Auto-syncing active
+            </p>
+          </div>
         </div>
       </div>
 
       {notification && (
-        <div className="mb-6 transition-all">
+        <div className="mb-6">
           <Alert
             type={notification.type}
             title={notification.title}
