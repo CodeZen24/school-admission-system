@@ -314,6 +314,7 @@ public sealed class HoldApplicationTests(PostgreSqlDatabaseFixture fixture)
     {
         await using var db = _fixture.CreateDbContext();
         var now = DateTimeOffset.UtcNow;
+        var createdAt = expiresAt > now ? now : expiresAt.AddMinutes(-10);
         db.Holds.Add(new AdmissionHold
         {
             Id = Guid.NewGuid(),
@@ -321,7 +322,7 @@ public sealed class HoldApplicationTests(PostgreSqlDatabaseFixture fixture)
             StudentId = studentId,
             Status = status,
             ExpiresAt = expiresAt,
-            CreatedAt = now,
+            CreatedAt = createdAt,
             ConfirmedAt = status == HoldStatus.Confirmed ? now : null,
             UpdatedAt = now
         });
