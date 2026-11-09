@@ -106,7 +106,6 @@ public sealed class DatabaseSchemaTests(PostgreSqlDatabaseFixture fixture)
     [Theory]
     [InlineData("12345")]
     [InlineData("1234567890123456")]
-    [InlineData("123456789012345678")]
     [InlineData("1234567890123456A")]
     public async Task CheckConstraintRejectsInvalidStudentId(string invalidStudentId)
     {
@@ -138,6 +137,39 @@ public sealed class DatabaseSchemaTests(PostgreSqlDatabaseFixture fixture)
         var ex = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
         var postgresEx = Assert.IsType<PostgresException>(ex.InnerException);
         Assert.Equal("ck_admission_holds_student_id_format", postgresEx.ConstraintName);
+    }
+
+    [Fact]
+    public async Task ColumnMaxLengthRejectsOverlengthStudentId()
+    {
+        await using var context = _fixture.CreateDbContext();
+
+        var admissionClass = new AdmissionClass
+        {
+            Id = Guid.NewGuid(),
+            Name = "Class 8B - Morning Shift",
+            TotalSeats = 50,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        context.Classes.Add(admissionClass);
+        await context.SaveChangesAsync();
+
+        var overlengthHold = new AdmissionHold
+        {
+            Id = Guid.NewGuid(),
+            ClassId = admissionClass.Id,
+            StudentId = "123456789012345678",
+            Status = HoldStatus.Held,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        context.Holds.Add(overlengthHold);
+
+        var ex = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+        var postgresEx = Assert.IsType<PostgresException>(ex.InnerException);
+        Assert.Equal(PostgresErrorCodes.StringDataRightTruncation, postgresEx.SqlState);
     }
 
     [Fact]
