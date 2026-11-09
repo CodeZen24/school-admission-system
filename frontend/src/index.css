@@ -15,18 +15,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(
-      circle at 8% 4%,
-      rgba(13, 148, 136, 0.1),
-      transparent 25rem
-    ),
-    radial-gradient(
-      circle at 94% 24%,
-      rgba(20, 184, 166, 0.08),
-      transparent 27rem
-    ),
-    #f5f7f4;
+  background: #f5f7f4;
 }
 
 button,
@@ -38,4 +27,12 @@ button:focus-visible,
 input:focus-visible {
   outline: 3px solid rgba(13, 148, 136, 0.32);
   outline-offset: 2px;
+}
+
+#student-id-input,
+#student-id-input:focus {
+  appearance: none;
+  border: 0;
+  box-shadow: none;
+  outline: 0;
 }

@@ -1,4 +1,5 @@
 import type { ChangeEvent } from 'react';
+import { BadgeCheck, CheckCircle2, Fingerprint } from 'lucide-react';
 
 interface StudentIdentityBarProps {
   studentId: string;
@@ -41,19 +42,19 @@ export function StudentIdentityBar({
             </span>
           </div>
           <div
-            className={`flex max-w-xl items-center rounded-xl border px-3 transition ${isValid ? 'border-[#b8dfd4] bg-[#f8fcfa] focus-within:border-[#0f766e] focus-within:ring-4 focus-within:ring-[#d9f0ea]' : 'border-[#f0c98e] bg-[#fffaf2] focus-within:border-[#b97913] focus-within:ring-4 focus-within:ring-[#fff0d8]'}`}
+            className={`flex max-w-xl items-center rounded-xl border px-3 transition ${isValid ? 'border-[#b8dfd4] bg-[#f8fcfa] focus-within:border-[#0f766e] focus-within:ring-2 focus-within:ring-[#b8dfd4]' : 'border-[#f0c98e] bg-[#fffaf2] focus-within:border-[#b97913] focus-within:ring-2 focus-within:ring-[#f0c98e]'}`}
           >
             <span
-              className="mr-2 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#e7f5f1] text-xs font-extrabold text-[#0f766e]"
+              className="mr-2 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[#e7f5f1] text-[#0f766e]"
               aria-hidden="true"
             >
-              ID
+              <Fingerprint size={16} strokeWidth={2.2} />
             </span>
             <input
               id="student-id-input"
               type="text"
               inputMode="numeric"
-              className="min-w-0 flex-1 bg-transparent py-3 font-mono text-sm tracking-wide text-[#17201e] outline-none placeholder:text-[#98a39e]"
+              className="min-w-0 flex-1 bg-transparent py-3 font-mono text-sm tracking-wide text-[#17201e] placeholder:text-[#98a39e]"
               value={studentId}
               onChange={handleChange}
               maxLength={17}
@@ -71,7 +72,11 @@ export function StudentIdentityBar({
             id="student-id-feedback"
             className={`mt-2 flex items-center gap-1.5 text-xs font-semibold ${validationError ? 'text-[#a86412]' : 'text-[#28764d]'}`}
           >
-            <span aria-hidden="true">{validationError ? '!' : '✓'}</span>
+            {validationError ? (
+              <BadgeCheck size={15} aria-hidden="true" />
+            ) : (
+              <CheckCircle2 size={15} aria-hidden="true" />
+            )}
             {validationError ||
               'Valid 17-digit identity ready for seat reservations'}
           </p>

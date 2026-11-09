@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Plus } from 'lucide-react';
 import { apiClient, ApiError } from '../../api/apiClient';
 import type { AdmissionClass } from '../../api/types';
 import { Alert } from '../Common/Alert';
@@ -65,13 +66,19 @@ export function CreateClassForm({ onClassCreated }: CreateClassFormProps) {
         </div>
         <button
           type="button"
-          className="rounded-xl bg-[#17201e] px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#2d3a35]"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17201e] px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#2d3a35]"
           onClick={() => {
             setIsOpen((open) => !open);
             setFormError(null);
           }}
         >
-          {isOpen ? 'Close form' : '+ Create new class'}
+          {isOpen ? (
+            'Close form'
+          ) : (
+            <>
+              <Plus size={16} aria-hidden="true" /> Create new class
+            </>
+          )}
         </button>
       </div>
       {isOpen && (

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { CalendarClock, GraduationCap, UsersRound } from 'lucide-react';
 import { apiClient, ApiError } from '../api/apiClient';
 import type { AdmissionClass, StudentHoldResponse } from '../api/types';
 import { useStudentIdentity } from '../hooks/useStudentIdentity';
@@ -175,6 +176,14 @@ export function Dashboard() {
     }
   };
 
+  const availableSeats = classes.reduce(
+    (total, classItem) => total + classItem.availableSeats,
+    0,
+  );
+  const activeHolds = studentHolds.filter(
+    (hold) => hold.status === 'HELD',
+  ).length;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -191,7 +200,11 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-[#e2e9e5]">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#0f9b86]" />
+          <CalendarClock
+            size={18}
+            className="text-[#0f766e]"
+            aria-hidden="true"
+          />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#75817b]">
               Registry status
@@ -202,6 +215,53 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {!isLoadingClasses && classes.length > 0 && (
+        <section
+          className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3"
+          aria-label="Admission summary"
+        >
+          <div className="flex items-center gap-3 rounded-xl border border-[#dfe7e3] bg-white px-4 py-3.5">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#e7f5f1] text-[#0f766e]">
+              <GraduationCap size={18} aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#78847e]">
+                Open classes
+              </p>
+              <p className="mt-0.5 text-lg font-extrabold text-[#24302b]">
+                {classes.length}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-[#dfe7e3] bg-white px-4 py-3.5">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#e7f5f1] text-[#0f766e]">
+              <UsersRound size={18} aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#78847e]">
+                Seats available
+              </p>
+              <p className="mt-0.5 text-lg font-extrabold text-[#24302b]">
+                {availableSeats}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-[#dfe7e3] bg-white px-4 py-3.5">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#fff0d8] text-[#94600f]">
+              <CalendarClock size={18} aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#78847e]">
+                Your active holds
+              </p>
+              <p className="mt-0.5 text-lg font-extrabold text-[#24302b]">
+                {activeHolds}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {notification && (
         <div className="mb-6">
