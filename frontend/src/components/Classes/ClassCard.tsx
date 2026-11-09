@@ -80,7 +80,6 @@ export function ClassCard({
           )}
         </div>
 
-        {/* Visual Seat Capacity Bar */}
         <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden flex mb-4">
           <div
             className="bg-emerald-500 h-full transition-all duration-300"
@@ -94,7 +93,6 @@ export function ClassCard({
           />
         </div>
 
-        {/* Four Seat Metrics Grid */}
         <div className="grid grid-cols-4 gap-2 text-center mb-5">
           <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
             <div className="text-[10px] uppercase font-bold text-slate-500">Total</div>

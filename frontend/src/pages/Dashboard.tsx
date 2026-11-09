@@ -24,20 +24,17 @@ export function Dashboard() {
     message: string;
   } | null>(null);
 
-  // Fetch classes
   const refreshClasses = useCallback(async () => {
     try {
       const data = await apiClient.getClasses();
       setClasses(data);
     } catch (err) {
-      // Don't override notification during background poll if user is reading something
       console.error('Failed to load classes:', err);
     } finally {
       setIsLoadingClasses(false);
     }
   }, []);
 
-  // Fetch current student holds
   const refreshHolds = useCallback(async () => {
     if (!isValid || !studentId) {
       setStudentHolds([]);
@@ -55,26 +52,21 @@ export function Dashboard() {
     }
   }, [isValid, studentId]);
 
-  // Combined refresh
   const refreshAll = useCallback(async () => {
     await Promise.allSettled([refreshClasses(), refreshHolds()]);
   }, [refreshClasses, refreshHolds]);
 
-  // Run on mount and when student ID changes
   useEffect(() => {
     void refreshAll();
   }, [refreshAll]);
 
-  // Periodic visibility-aware background polling every 4 seconds
   usePolling(refreshAll, 4000, true);
 
-  // Class created callback
   const handleClassCreated = useCallback((newClass: AdmissionClass) => {
     setClasses(prev => [newClass, ...prev]);
     void refreshClasses();
   }, [refreshClasses]);
 
-  // Apply for seat hold
   const handleApply = async (classId: string) => {
     if (!isValid) {
       setNotification({
@@ -110,14 +102,12 @@ export function Dashboard() {
           message: 'An unexpected error occurred while reserving your seat.',
         });
       }
-      // Refresh to get latest real seats
       void refreshClasses();
     } finally {
       setApplyingClassId(null);
     }
   };
 
-  // Confirm hold & simulate fee payment
   const handleConfirm = async (holdId: string) => {
     setNotification(null);
     try {
@@ -146,7 +136,6 @@ export function Dashboard() {
     }
   };
 
-  // Cancel hold
   const handleCancel = async (holdId: string) => {
     setNotification(null);
     try {
@@ -177,7 +166,6 @@ export function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      {/* Top Banner & Title */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight sm:text-3xl">
@@ -193,7 +181,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Global Toast / Notification */}
       {notification && (
         <div className="mb-6 transition-all">
           <Alert
@@ -206,7 +193,6 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Student Identity Bar */}
       <StudentIdentityBar
         studentId={studentId}
         onStudentIdChange={setStudentId}
@@ -214,7 +200,6 @@ export function Dashboard() {
         validationError={validationError}
       />
 
-      {/* Class Creation Form (Collapsible) & Classes Grid */}
       <CreateClassForm onClassCreated={handleClassCreated} />
 
       <ClassList
@@ -227,7 +212,6 @@ export function Dashboard() {
         onHoldExpired={refreshAll}
       />
 
-      {/* Student's Applications History & Actions */}
       <MyApplicationsList
         holds={studentHolds}
         isLoading={isLoadingHolds}

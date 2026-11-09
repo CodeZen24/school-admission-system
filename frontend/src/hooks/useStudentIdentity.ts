@@ -37,7 +37,6 @@ export function useStudentIdentity() {
     try {
       localStorage.setItem(STORAGE_KEY, trimmed);
     } catch {
-      // Storage unavailable or disabled
     }
   };
 
@@ -45,7 +44,6 @@ export function useStudentIdentity() {
     try {
       localStorage.setItem(STORAGE_KEY, studentId);
     } catch {
-      // Ignore storage errors
     }
   }, [studentId]);
 

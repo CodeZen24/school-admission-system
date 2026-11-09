@@ -22,7 +22,6 @@ export function usePolling(
     try {
       void savedCallback.current();
     } catch {
-      // Ignore background poll errors
     }
   }, []);
 

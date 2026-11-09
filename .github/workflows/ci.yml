@@ -86,3 +86,31 @@ jobs:
 
       - name: Build Docker images
         run: docker compose build
+
+      - name: Start the Compose stack
+        run: docker compose up --detach
+
+      - name: Verify running services
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://localhost:8080/health; then
+              break
+            fi
+            test "$attempt" -lt 30 || { docker compose logs; exit 1; }
+            sleep 2
+          done
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://localhost:3000/ > /dev/null; then
+              break
+            fi
+            test "$attempt" -lt 30 || { docker compose logs; exit 1; }
+            sleep 2
+          done
+          curl --fail --silent --show-error \
+            --request POST http://localhost:8080/classes \
+            --header 'Content-Type: application/json' \
+            --data '{"name":"CI verification class","totalSeats":1}' > /dev/null
+
+      - name: Stop the Compose stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans
