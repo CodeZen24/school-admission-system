@@ -1,0 +1,28 @@
+# .NET build output
+**/bin/
+**/obj/
+**/TestResults/
+artifacts/
+
+# IDE and editor state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Local tooling and operating-system files
+.dotnet-cli/
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+
+# Frontend build output
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/

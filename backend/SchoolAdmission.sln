@@ -1,0 +1,36 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{53953915-2858-44DC-93BC-51B95733B338}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolAdmission.Api", "src\SchoolAdmission.Api\SchoolAdmission.Api.csproj", "{1A7A005F-7347-4235-A979-3ECFC8EB0D90}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{170C369B-C0F0-4C2B-A97F-A45A1B4A61C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolAdmission.Api.IntegrationTests", "tests\SchoolAdmission.Api.IntegrationTests\SchoolAdmission.Api.IntegrationTests.csproj", "{03EE6DBF-6F50-4B7D-A564-3CF5D9899916}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A7A005F-7347-4235-A979-3ECFC8EB0D90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A7A005F-7347-4235-A979-3ECFC8EB0D90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A7A005F-7347-4235-A979-3ECFC8EB0D90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A7A005F-7347-4235-A979-3ECFC8EB0D90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03EE6DBF-6F50-4B7D-A564-3CF5D9899916}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03EE6DBF-6F50-4B7D-A564-3CF5D9899916}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03EE6DBF-6F50-4B7D-A564-3CF5D9899916}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03EE6DBF-6F50-4B7D-A564-3CF5D9899916}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1A7A005F-7347-4235-A979-3ECFC8EB0D90} = {53953915-2858-44DC-93BC-51B95733B338}
+		{03EE6DBF-6F50-4B7D-A564-3CF5D9899916} = {170C369B-C0F0-4C2B-A97F-A45A1B4A61C8}
+	EndGlobalSection
+EndGlobal
