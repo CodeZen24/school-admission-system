@@ -1,0 +1,18 @@
+# Build outputs are specific to the machine that created them. Copying them into
+# a Linux image can overwrite the container's restore metadata.
+**/bin/
+**/obj/
+
+# Dependency directories and generated frontend output are rebuilt in Docker.
+**/node_modules/
+**/dist/
+
+# Local tooling, source-control data, and environment files are not build input.
+.git/
+.github/
+.env
+.env.*
+!.env.example
+.dotnet-cli/
+*.user
+*.suo
