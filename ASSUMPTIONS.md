@@ -19,7 +19,7 @@ This file records the choices I made where the assignment did not define an exac
 - PostgreSQL is responsible for admission correctness. When a student applies, the API locks the relevant class row with `SELECT ... FOR UPDATE` before it checks capacity and creates a hold.
 - Seat counts are calculated from holds instead of being stored as counters. A live `HELD` row and every `CONFIRMED` row occupy a seat; `CANCELLED` and `EXPIRED` rows do not.
 - This design guarantees that occupied seats never exceed the class capacity across concurrent requests and API instances. It does not claim strict wall-clock ordering between requests; PostgreSQL lock scheduling decides which competing transaction proceeds first.
-- The database clock is used for hold expiry and transitions so that the API and PostgreSQL do not disagree because of machine clock differences.
+- The database clock (`clock_timestamp()` captured after lock acquisition) is used for hold expiry, deadlines, and state transitions so that transactions waiting in a lock queue receive their full duration and do not suffer from clock drift or stale transaction-start timestamps.
 
 ## Holds
 
@@ -27,7 +27,7 @@ This file records the choices I made where the assignment did not define an exac
 - A hold can be `HELD`, `CONFIRMED`, `CANCELLED`, or `EXPIRED`.
 - Confirmation is idempotent: confirming an already confirmed hold returns success without changing seat counts again.
 - Cancellation is idempotent for cancelled and expired holds. A confirmed hold cannot be cancelled.
-- A background worker marks expired holds without needing another API request. Seat queries also treat an overdue hold as unavailable immediately, so a delayed worker does not block a seat.
+- A background worker periodically marks expired holds in PostgreSQL without requiring API traffic. Seat availability queries immediately exclude overdue HELD records from occupied-seat calculations using the database clock. This ensures that an expired hold releases its seat even if the background worker has not yet updated its status.
 
 ## Database validation
 

@@ -20,6 +20,11 @@ export function Dashboard() {
   const [isLoadingHolds, setIsLoadingHolds] = useState(true);
   const [applyingClassId, setApplyingClassId] = useState<string | null>(null);
 
+  const [classesError, setClassesError] = useState<string | null>(null);
+  const [holdsError, setHoldsError] = useState<string | null>(null);
+  const [hasClassesSyncError, setHasClassesSyncError] = useState(false);
+  const [hasHoldsSyncError, setHasHoldsSyncError] = useState(false);
+
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info' | 'warning';
     title?: string;
@@ -30,8 +35,22 @@ export function Dashboard() {
     try {
       const data = await apiClient.getClasses();
       setClasses(data);
+      setClassesError(null);
+      setHasClassesSyncError(false);
     } catch (err) {
       console.error('Failed to load classes:', err);
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Unable to reach the server to load classes.';
+      setClasses((prev) => {
+        if (prev.length === 0) {
+          setClassesError(message);
+        } else {
+          setHasClassesSyncError(true);
+        }
+        return prev;
+      });
     } finally {
       setIsLoadingClasses(false);
     }
@@ -40,6 +59,8 @@ export function Dashboard() {
   const refreshHolds = useCallback(async () => {
     if (!isValid || !studentId) {
       setStudentHolds([]);
+      setHoldsError(null);
+      setHasHoldsSyncError(false);
       setIsLoadingHolds(false);
       return;
     }
@@ -47,8 +68,22 @@ export function Dashboard() {
     try {
       const data = await apiClient.getMyHolds(studentId);
       setStudentHolds(data);
+      setHoldsError(null);
+      setHasHoldsSyncError(false);
     } catch (err) {
       console.error('Failed to load student applications:', err);
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Unable to reach the server to load your applications.';
+      setStudentHolds((prev) => {
+        if (prev.length === 0) {
+          setHoldsError(message);
+        } else {
+          setHasHoldsSyncError(true);
+        }
+        return prev;
+      });
     } finally {
       setIsLoadingHolds(false);
     }
@@ -176,6 +211,9 @@ export function Dashboard() {
     }
   };
 
+  const openClasses = classes.filter(
+    (classItem) => classItem.availableSeats > 0,
+  ).length;
   const availableSeats = classes.reduce(
     (total, classItem) => total + classItem.availableSeats,
     0,
@@ -183,6 +221,10 @@ export function Dashboard() {
   const activeHolds = studentHolds.filter(
     (hold) => hold.status === 'HELD',
   ).length;
+
+  const hasSyncWarning =
+    (hasClassesSyncError || hasHoldsSyncError) &&
+    (classes.length > 0 || studentHolds.length > 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -230,7 +272,7 @@ export function Dashboard() {
                 Open classes
               </p>
               <p className="mt-0.5 text-lg font-extrabold text-[#24302b]">
-                {classes.length}
+                {openClasses}
               </p>
             </div>
           </div>
@@ -263,6 +305,33 @@ export function Dashboard() {
         </section>
       )}
 
+      {hasSyncWarning && (
+        <div className="mb-6">
+          <Alert
+            type="warning"
+            title="Live Connection Notice"
+            onClose={() => {
+              setHasClassesSyncError(false);
+              setHasHoldsSyncError(false);
+            }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <span>
+                Live synchronization is temporarily interrupted. Displayed seat
+                counts or application history may be delayed.
+              </span>
+              <button
+                type="button"
+                onClick={() => void refreshAll()}
+                className="shrink-0 font-extrabold underline hover:opacity-80 text-amber-950"
+              >
+                Retry sync
+              </button>
+            </div>
+          </Alert>
+        </div>
+      )}
+
       {notification && (
         <div className="mb-6">
           <Alert
@@ -284,23 +353,65 @@ export function Dashboard() {
 
       <CreateClassForm onClassCreated={handleClassCreated} />
 
-      <ClassList
-        classes={classes}
-        studentHolds={studentHolds}
-        isLoading={isLoadingClasses}
-        applyingClassId={applyingClassId}
-        isStudentIdValid={isValid}
-        onApply={handleApply}
-        onHoldExpired={refreshAll}
-      />
+      {classesError && classes.length === 0 && !isLoadingClasses ? (
+        <div className="mb-10">
+          <Alert type="error" title="Unable to Load Admission Classes">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-1">
+              <span>{classesError}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLoadingClasses(true);
+                  setClassesError(null);
+                  void refreshClasses();
+                }}
+                className="shrink-0 rounded-lg bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-rose-800 transition"
+              >
+                Retry
+              </button>
+            </div>
+          </Alert>
+        </div>
+      ) : (
+        <ClassList
+          classes={classes}
+          studentHolds={studentHolds}
+          isLoading={isLoadingClasses}
+          applyingClassId={applyingClassId}
+          isStudentIdValid={isValid}
+          onApply={handleApply}
+          onHoldExpired={refreshAll}
+        />
+      )}
 
-      <MyApplicationsList
-        holds={studentHolds}
-        isLoading={isLoadingHolds}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        onHoldExpired={refreshAll}
-      />
+      {holdsError && studentHolds.length === 0 && !isLoadingHolds ? (
+        <div className="mb-8">
+          <Alert type="error" title="Unable to Load Application History">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-1">
+              <span>{holdsError}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLoadingHolds(true);
+                  setHoldsError(null);
+                  void refreshHolds();
+                }}
+                className="shrink-0 rounded-lg bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-rose-800 transition"
+              >
+                Retry
+              </button>
+            </div>
+          </Alert>
+        </div>
+      ) : (
+        <MyApplicationsList
+          holds={studentHolds}
+          isLoading={isLoadingHolds}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          onHoldExpired={refreshAll}
+        />
+      )}
     </div>
   );
 }

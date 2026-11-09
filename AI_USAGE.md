@@ -1,9 +1,17 @@
-# AI Usage Disclosure
+# AI Usage & Engineering Responsibility
 
-I used Google Antigravity and OpenAI Codex as part of my development workflow for this assignment.
+AI was used throughout this project as a productivity aid to accelerate development, explore implementation approaches, assist with debugging, and improve testing and documentation.
 
-They helped me break down the assignment brief, keep track of the implementation plan, and think through concurrent seat requests, expired holds, and repeat requests. I also used them for small code drafts, test ideas, Docker configuration, and requirement reviews.
+I directed the process with clear requirements and technical context. AI suggestions were never accepted blindly. I regularly reviewed the generated work, identified inconsistencies and smaller mistakes, refined my instructions, and guided corrections to keep the implementation aligned with the project requirements and architecture.
 
-I reviewed the code and documentation myself, made the final technical decisions, and corrected work that did not fit the assignment. One early generated version used application-server time in part of the hold-expiry flow. I caught that during the database and concurrency review, then changed those transitions to use PostgreSQL time. I also removed early generated additions that were outside the agreed scope.
+## A Critical Issue I Identified
 
-Before submitting, I verified the project with formatting and build checks, PostgreSQL integration tests in CI, a frontend production build, Docker image builds, and the GitHub Actions workflow. I remain responsible for the final code, tests, documentation, and submission.
+During a deeper technical review, I identified a potentially serious PostgreSQL timing issue that had been missed during the initial AI-assisted implementation.
+
+Using `NOW()` inside a transaction can return the transaction-start timestamp, even when the transaction has been waiting for a database row lock. This could cause incorrect hold-expiration decisions and reduce a student's actual reservation time.
+
+I investigated the issue and corrected the relevant operations to use PostgreSQL's `clock_timestamp()` after acquiring the required lock. I then verified the implementation through code review and automated integration tests.
+
+## My Approach
+
+I used AI to work faster, not to replace engineering judgment. Understanding the requirements, evaluating suggestions, identifying risks, making technical decisions, and taking responsibility for the final implementation remained my responsibility.
