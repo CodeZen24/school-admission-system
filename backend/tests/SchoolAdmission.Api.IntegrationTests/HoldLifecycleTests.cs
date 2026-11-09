@@ -324,10 +324,14 @@ public sealed class HoldLifecycleTests(PostgreSqlDatabaseFixture fixture)
         Assert.Equal(holdB.HoldId, list[0].HoldId);
         Assert.Equal("Class History Beta", list[0].ClassName);
         Assert.Equal(HoldStatus.Held, list[0].Status);
+        Assert.NotEqual(default, list[0].CreatedAt);
 
         Assert.Equal(holdA.HoldId, list[1].HoldId);
         Assert.Equal("Class History Alpha", list[1].ClassName);
         Assert.Equal(HoldStatus.Confirmed, list[1].Status);
+        Assert.NotEqual(default, list[1].CreatedAt);
+
+        Assert.True(list[0].CreatedAt >= list[1].CreatedAt);
     }
 
     [Fact]

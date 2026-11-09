@@ -8,4 +8,5 @@ public sealed record StudentHoldResponse(
     Guid ClassId,
     string ClassName,
     string Status,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    DateTimeOffset CreatedAt);

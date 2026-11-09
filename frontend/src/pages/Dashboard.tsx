@@ -93,7 +93,7 @@ export function Dashboard() {
         type: 'success',
         title: 'Seat Reserved!',
         message:
-          'Your 10-minute reservation hold is active. Confirm simulated payment below to finalize enrollment.',
+          'Your reservation hold is active. Confirm simulated payment before it expires to finalize enrollment.',
       });
       await refreshAll();
     } catch (err) {

@@ -16,6 +16,12 @@ interface ApplicationRowProps {
   onHoldExpired?: () => void;
 }
 
+function formatAppliedDate(dateString?: string): string | null {
+  if (!dateString) return null;
+  const parsed = new Date(dateString);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleString();
+}
+
 function ApplicationRow({
   hold,
   onConfirm,
@@ -24,6 +30,7 @@ function ApplicationRow({
 }: ApplicationRowProps) {
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const appliedDate = formatAppliedDate(hold.createdAt);
   const { remainingSeconds, formatted, isExpired } = useCountdown(
     hold.expiresAt,
   );
@@ -81,8 +88,8 @@ function ApplicationRow({
             className="mt-1 text-xs font-mono text-[#75817b]"
             title={hold.holdId}
           >
-            Reservation {hold.holdId.substring(0, 8)}… · Applied{' '}
-            {new Date(hold.createdAt).toLocaleString()}
+            Reservation {hold.holdId.substring(0, 8)}…
+            {appliedDate ? ` · Applied ${appliedDate}` : ''}
           </p>
           {status === 'HELD' && (
             <p

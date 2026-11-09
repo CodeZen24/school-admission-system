@@ -84,7 +84,7 @@ npm ci --prefix frontend
 npm run build --prefix frontend
 ```
 
-The concurrency suite sends 50 concurrent reservation requests to a class with five seats. It verifies that exactly five requests succeed and that PostgreSQL never records more occupied seats than the class capacity.
+The concurrency suite sends simultaneous reservation requests to real PostgreSQL instances across multiple load configurations (20 requests against 1 seat, 50 requests against 10 seats, and 50 requests against 25 seats). It verifies that successful holds never exceed class capacity, surplus requests receive HTTP 409 Conflict, and database state matches expected seat counts.
 
 ## Manual check before submission
 
