@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore backend/SchoolAdmission.sln --locked-mode
+
+      - name: Verify formatting
+        run: dotnet format backend/SchoolAdmission.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build backend/SchoolAdmission.sln --configuration Release --no-restore
+
+      - name: Test
+        run: >
+          dotnet test backend/SchoolAdmission.sln --configuration Release --no-build
+          --logger "trx;LogFileName=results.trx"
+          --logger "console;verbosity=normal"
+          --results-directory test-results
+
+      - name: Report test counts
+        if: always()
+        run: |
+          trx=$(find test-results -name results.trx | head -n 1)
+          test -n "$trx" || { echo "::error::No test results were produced"; exit 1; }
+          counters=$(grep -o '<Counters [^>]*>' "$trx")
+          echo "$counters"
+          echo "### Backend test results" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$counters\`" >> "$GITHUB_STEP_SUMMARY"
+          executed=$(echo "$counters" | sed -n 's/.*executed="\([0-9]*\)".*/\1/p')
+          test "${executed:-0}" -gt 0 || { echo "::error::No tests were executed"; exit 1; }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: test-results
