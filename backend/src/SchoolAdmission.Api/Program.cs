@@ -10,6 +10,29 @@ using SchoolAdmission.Api.Infrastructure.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string CorsPolicy = "DefaultCorsPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicy, policy =>
+    {
+        var configuredOrigins = builder.Configuration["CORS_ORIGINS"]?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (configuredOrigins is { Length: > 0 })
+        {
+            policy.WithOrigins(configuredOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -68,6 +91,8 @@ if (args.Contains("--migrate"))
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+
+app.UseCors(CorsPolicy);
 
 if (app.Environment.IsDevelopment())
 {

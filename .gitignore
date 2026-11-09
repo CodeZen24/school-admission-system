@@ -26,3 +26,4 @@ appsettings.Local.json
 frontend/node_modules/
 frontend/dist/
 frontend/coverage/
+*.tsbuildinfo
