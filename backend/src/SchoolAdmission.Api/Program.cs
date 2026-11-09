@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Configuration;
+using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Infrastructure.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +19,12 @@ builder.Services.AddProblemDetails(options =>
         context.ProblemDetails.Extensions["traceId"] =
             Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
     };
+});
+
+builder.Services.AddDbContext<SchoolAdmissionDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseNpgsql(connectionString);
 });
 
 builder.Services
@@ -42,6 +50,14 @@ builder.Services
     .ValidateOnStart();
 
 var app = builder.Build();
+
+if (args.Contains("--migrate"))
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<SchoolAdmissionDbContext>();
+    await dbContext.Database.MigrateAsync();
+    return;
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
