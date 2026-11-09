@@ -5,9 +5,10 @@ WORKDIR /src
 # Copy central build and package configuration
 COPY Directory.Build.props Directory.Packages.props global.json ./
 COPY backend/SchoolAdmission.sln backend/
-COPY backend/packages.lock.json backend/
 COPY backend/src/SchoolAdmission.Api/SchoolAdmission.Api.csproj backend/src/SchoolAdmission.Api/
+COPY backend/src/SchoolAdmission.Api/packages.lock.json backend/src/SchoolAdmission.Api/
 COPY backend/tests/SchoolAdmission.Api.IntegrationTests/SchoolAdmission.Api.IntegrationTests.csproj backend/tests/SchoolAdmission.Api.IntegrationTests/
+COPY backend/tests/SchoolAdmission.Api.IntegrationTests/packages.lock.json backend/tests/SchoolAdmission.Api.IntegrationTests/
 
 # Restore dependencies using locked mode
 RUN dotnet restore backend/SchoolAdmission.sln --locked-mode
