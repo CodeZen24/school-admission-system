@@ -20,6 +20,22 @@ public sealed class AdmissionHoldConfiguration : IEntityTypeConfiguration<Admiss
             tableBuilder.HasCheckConstraint(
                 "ck_admission_holds_status_valid",
                 "status IN ('HELD', 'CONFIRMED', 'CANCELLED', 'EXPIRED')");
+
+            tableBuilder.HasCheckConstraint(
+                "ck_admission_holds_expiry_after_creation",
+                "expires_at > created_at");
+
+            tableBuilder.HasCheckConstraint(
+                "ck_admission_holds_updated_after_creation",
+                "updated_at >= created_at");
+
+            tableBuilder.HasCheckConstraint(
+                "ck_admission_holds_confirmation_state",
+                "(status = 'CONFIRMED') = (confirmed_at IS NOT NULL)");
+
+            tableBuilder.HasCheckConstraint(
+                "ck_admission_holds_cancellation_state",
+                "(status = 'CANCELLED') = (cancelled_at IS NOT NULL)");
         });
 
         builder.HasKey(h => h.Id);

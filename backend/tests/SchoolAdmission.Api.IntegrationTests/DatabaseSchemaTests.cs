@@ -206,6 +206,38 @@ public sealed class DatabaseSchemaTests(PostgreSqlDatabaseFixture fixture)
     }
 
     [Fact]
+    public Task CheckConstraintRejectsExpiryAtCreationTime()
+    {
+        return AssertHoldConstraintAsync(
+            hold => hold.ExpiresAt = hold.CreatedAt,
+            "ck_admission_holds_expiry_after_creation");
+    }
+
+    [Fact]
+    public Task CheckConstraintRejectsUpdateBeforeCreation()
+    {
+        return AssertHoldConstraintAsync(
+            hold => hold.UpdatedAt = hold.CreatedAt.AddSeconds(-1),
+            "ck_admission_holds_updated_after_creation");
+    }
+
+    [Fact]
+    public Task CheckConstraintRejectsConfirmedStatusWithoutConfirmationTime()
+    {
+        return AssertHoldConstraintAsync(
+            hold => hold.Status = HoldStatus.Confirmed,
+            "ck_admission_holds_confirmation_state");
+    }
+
+    [Fact]
+    public Task CheckConstraintRejectsCancelledStatusWithoutCancellationTime()
+    {
+        return AssertHoldConstraintAsync(
+            hold => hold.Status = HoldStatus.Cancelled,
+            "ck_admission_holds_cancellation_state");
+    }
+
+    [Fact]
     public async Task PartialUniqueIndexPreventsDuplicateActiveHoldsForSameClassAndStudent()
     {
         await using var context = _fixture.CreateDbContext();
@@ -244,6 +276,7 @@ public sealed class DatabaseSchemaTests(PostgreSqlDatabaseFixture fixture)
             Status = HoldStatus.Confirmed,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
             CreatedAt = DateTimeOffset.UtcNow,
+            ConfirmedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
         duplicateContext.Holds.Add(secondHold);
@@ -329,5 +362,38 @@ public sealed class DatabaseSchemaTests(PostgreSqlDatabaseFixture fixture)
         var ex = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
         var postgresEx = Assert.IsType<PostgresException>(ex.InnerException);
         Assert.Equal("FK_admission_holds_admission_classes_class_id", postgresEx.ConstraintName);
+    }
+
+    private async Task AssertHoldConstraintAsync(
+        Action<AdmissionHold> makeInvalid,
+        string expectedConstraint)
+    {
+        await using var context = _fixture.CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+        var admissionClass = new AdmissionClass
+        {
+            Id = Guid.NewGuid(),
+            Name = $"Constraint test {Guid.NewGuid():N}",
+            TotalSeats = 1,
+            CreatedAt = now
+        };
+        var hold = new AdmissionHold
+        {
+            Id = Guid.NewGuid(),
+            ClassId = admissionClass.Id,
+            StudentId = "12345678901234567",
+            Status = HoldStatus.Held,
+            ExpiresAt = now.AddMinutes(10),
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        makeInvalid(hold);
+        context.Classes.Add(admissionClass);
+        context.Holds.Add(hold);
+
+        var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+        var postgresException = Assert.IsType<PostgresException>(exception.InnerException);
+        Assert.Equal(expectedConstraint, postgresException.ConstraintName);
     }
 }

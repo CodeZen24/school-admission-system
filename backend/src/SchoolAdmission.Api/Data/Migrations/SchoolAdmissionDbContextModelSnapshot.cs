@@ -115,9 +115,17 @@ namespace SchoolAdmission.Api.Data.Migrations
 
                     b.ToTable("admission_holds", null, t =>
                         {
+                            t.HasCheckConstraint("ck_admission_holds_cancellation_state", "(status = 'CANCELLED') = (cancelled_at IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_admission_holds_confirmation_state", "(status = 'CONFIRMED') = (confirmed_at IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_admission_holds_expiry_after_creation", "expires_at > created_at");
+
                             t.HasCheckConstraint("ck_admission_holds_status_valid", "status IN ('HELD', 'CONFIRMED', 'CANCELLED', 'EXPIRED')");
 
                             t.HasCheckConstraint("ck_admission_holds_student_id_format", "student_id ~ '^[0-9]{17}$'");
+
+                            t.HasCheckConstraint("ck_admission_holds_updated_after_creation", "updated_at >= created_at");
                         });
                 });
 

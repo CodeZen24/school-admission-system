@@ -30,7 +30,6 @@ public sealed class HoldsService(
             IsolationLevel.ReadCommitted,
             cancellationToken);
 
-        // Competing applications for this class queue here until the holder commits or rolls back.
         var totalSeatsRows = await _dbContext.Database
             .SqlQuery<int>($"""SELECT total_seats AS "Value" FROM admission_classes WHERE id = {classId} FOR UPDATE""")
             .ToListAsync(cancellationToken);
@@ -42,8 +41,6 @@ public sealed class HoldsService(
 
         var totalSeats = totalSeatsRows[0];
 
-        // Materialize expiry with database time so past-due rows stop occupying seats and stop
-        // blocking the partial unique index. now() is fixed for the whole transaction.
         await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"""
             UPDATE admission_holds
@@ -52,7 +49,6 @@ public sealed class HoldsService(
             """,
             cancellationToken);
 
-        // Remaining HELD rows are live: their expiry is after this transaction's now().
         var alreadyApplied = await _dbContext.Holds.AnyAsync(
             h => h.ClassId == classId
                 && h.StudentId == studentId
@@ -94,7 +90,6 @@ public sealed class HoldsService(
             exception.SqlState == PostgresErrorCodes.UniqueViolation
             && exception.ConstraintName == AdmissionHoldConfiguration.ActiveApplicationIndexName)
         {
-            // The class lock normally makes this unreachable; the index is the final backstop.
             return new ApplyHoldResult(ApplyHoldOutcome.DuplicateApplication);
         }
 
@@ -161,7 +156,7 @@ public sealed class HoldsService(
             return new ConfirmHoldResult(ConfirmHoldOutcome.Cancelled);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = await GetDatabaseTimeAsync(cancellationToken);
         if (hold.Status == HoldStatus.Expired || hold.ExpiresAt <= now)
         {
             if (hold.Status == HoldStatus.Held)
@@ -221,7 +216,7 @@ public sealed class HoldsService(
             return new CancelHoldResult(CancelHoldOutcome.Cancelled);
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = await GetDatabaseTimeAsync(cancellationToken);
         if (hold.ExpiresAt <= now)
         {
             hold.Status = HoldStatus.Expired;
@@ -257,5 +252,16 @@ public sealed class HoldsService(
                     : h.Status,
                 h.ExpiresAt))
             .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Returns the current PostgreSQL transaction timestamp so every hold transition uses the
+    /// same clock as allocation, expiration, and seat-count queries.
+    /// </summary>
+    private async Task<DateTimeOffset> GetDatabaseTimeAsync(CancellationToken cancellationToken)
+    {
+        return await _dbContext.Database
+            .SqlQuery<DateTimeOffset>($"""SELECT now() AS "Value" """)
+            .SingleAsync(cancellationToken);
     }
 }

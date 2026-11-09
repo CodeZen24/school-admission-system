@@ -19,7 +19,6 @@ public sealed partial class HoldExpirationWorker(
     {
         LogStarted(_logger);
 
-        // Run immediately at host start before the first timer tick
         await ExpireStaleHoldsAsync(stoppingToken);
 
         using var timer = new PeriodicTimer(Interval);
@@ -54,7 +53,6 @@ public sealed partial class HoldExpirationWorker(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Graceful shutdown
         }
         catch (Exception ex)
         {

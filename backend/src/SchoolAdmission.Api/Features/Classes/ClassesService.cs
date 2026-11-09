@@ -45,8 +45,10 @@ public sealed class ClassesService(SchoolAdmissionDbContext dbContext) : IClasse
         return row is null ? null : ToResponse(row);
     }
 
-    // Expiry is evaluated with PostgreSQL's clock (DateTimeOffset.UtcNow translates to now()),
-    // so a delayed expiration worker never counts a past-due hold as live.
+    /// <summary>
+    /// Projects live seat counts in PostgreSQL. Npgsql translates <see cref="DateTimeOffset.UtcNow"/>
+    /// to <c>now()</c>, so delayed background expiration cannot keep a seat occupied.
+    /// </summary>
     private static IQueryable<ClassSeatCounts> SeatCounts(IQueryable<AdmissionClass> classes) =>
         classes.Select(c => new ClassSeatCounts(
             c.Id,
