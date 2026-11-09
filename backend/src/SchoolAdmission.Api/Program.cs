@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using SchoolAdmission.Api.Background;
 using SchoolAdmission.Api.Configuration;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Features.Classes;
@@ -31,6 +32,7 @@ builder.Services.AddDbContext<SchoolAdmissionDbContext>(options =>
 
 builder.Services.AddScoped<IClassesService, ClassesService>();
 builder.Services.AddScoped<IHoldsService, HoldsService>();
+builder.Services.AddHostedService<HoldExpirationWorker>();
 
 builder.Services
     .AddOptions<AdmissionOptions>()
