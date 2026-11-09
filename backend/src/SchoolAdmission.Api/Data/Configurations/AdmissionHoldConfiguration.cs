@@ -6,6 +6,9 @@ namespace SchoolAdmission.Api.Data.Configurations;
 
 public sealed class AdmissionHoldConfiguration : IEntityTypeConfiguration<AdmissionHold>
 {
+    /// <summary>Partial unique index allowing one HELD or CONFIRMED hold per student and class.</summary>
+    public const string ActiveApplicationIndexName = "ix_admission_holds_class_id_student_id_active";
+
     public void Configure(EntityTypeBuilder<AdmissionHold> builder)
     {
         builder.ToTable("admission_holds", tableBuilder =>
@@ -59,7 +62,7 @@ public sealed class AdmissionHoldConfiguration : IEntityTypeConfiguration<Admiss
         builder.HasIndex(h => new { h.ClassId, h.StudentId })
             .IsUnique()
             .HasFilter("status IN ('HELD', 'CONFIRMED')")
-            .HasDatabaseName("ix_admission_holds_class_id_student_id_active");
+            .HasDatabaseName(ActiveApplicationIndexName);
 
         builder.HasIndex(h => new { h.ClassId, h.Status, h.ExpiresAt })
             .HasDatabaseName("ix_admission_holds_class_id_status_expires_at");

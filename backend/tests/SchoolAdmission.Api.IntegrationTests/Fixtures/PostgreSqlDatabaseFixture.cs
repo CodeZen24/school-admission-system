@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -46,12 +47,17 @@ public sealed class PostgreSqlDatabaseFixture : IAsyncLifetime
         return new SchoolAdmissionDbContext(options);
     }
 
-    public WebApplicationFactory<Program> CreateWebApplicationFactory()
+    public WebApplicationFactory<Program> CreateWebApplicationFactory(int? holdDurationSeconds = null)
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("ConnectionStrings:DefaultConnection", ConnectionString);
             builder.UseEnvironment("Development");
+
+            if (holdDurationSeconds is { } seconds)
+            {
+                builder.UseSetting("HOLD_DURATION_SECONDS", seconds.ToString(CultureInfo.InvariantCulture));
+            }
         });
     }
 }

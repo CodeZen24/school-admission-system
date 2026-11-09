@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Configuration;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Features.Classes;
+using SchoolAdmission.Api.Features.Holds;
 using SchoolAdmission.Api.Infrastructure.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,7 @@ builder.Services.AddDbContext<SchoolAdmissionDbContext>(options =>
 });
 
 builder.Services.AddScoped<IClassesService, ClassesService>();
+builder.Services.AddScoped<IHoldsService, HoldsService>();
 
 builder.Services
     .AddOptions<AdmissionOptions>()

@@ -1,0 +1,111 @@
+using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Npgsql;
+using SchoolAdmission.Api.Configuration;
+using SchoolAdmission.Api.Data;
+using SchoolAdmission.Api.Data.Configurations;
+using SchoolAdmission.Api.Domain;
+
+namespace SchoolAdmission.Api.Features.Holds;
+
+public sealed class HoldsService(
+    SchoolAdmissionDbContext dbContext,
+    IOptions<AdmissionOptions> options) : IHoldsService
+{
+    private readonly SchoolAdmissionDbContext _dbContext = dbContext;
+    private readonly int _holdDurationSeconds = options.Value.HoldDurationSeconds;
+
+    /// <summary>
+    /// Reserves one seat. Every allocation for a class is serialized by a row lock on that class,
+    /// so correctness comes from PostgreSQL and holds across API processes, not from process memory.
+    /// Lock order is always class row first, then hold rows.
+    /// </summary>
+    public async Task<ApplyHoldResult> ApplyAsync(
+        Guid classId,
+        string studentId,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+
+        // Competing applications for this class queue here until the holder commits or rolls back.
+        var totalSeatsRows = await _dbContext.Database
+            .SqlQuery<int>($"""SELECT total_seats AS "Value" FROM admission_classes WHERE id = {classId} FOR UPDATE""")
+            .ToListAsync(cancellationToken);
+
+        if (totalSeatsRows.Count == 0)
+        {
+            return new ApplyHoldResult(ApplyHoldOutcome.ClassNotFound);
+        }
+
+        var totalSeats = totalSeatsRows[0];
+
+        // Materialize expiry with database time so past-due rows stop occupying seats and stop
+        // blocking the partial unique index. now() is fixed for the whole transaction.
+        await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            UPDATE admission_holds
+            SET status = 'EXPIRED', updated_at = now()
+            WHERE class_id = {classId} AND status = 'HELD' AND expires_at <= now()
+            """,
+            cancellationToken);
+
+        // Remaining HELD rows are live: their expiry is after this transaction's now().
+        var alreadyApplied = await _dbContext.Holds.AnyAsync(
+            h => h.ClassId == classId
+                && h.StudentId == studentId
+                && (h.Status == HoldStatus.Held || h.Status == HoldStatus.Confirmed),
+            cancellationToken);
+
+        if (alreadyApplied)
+        {
+            await transaction.CommitAsync(cancellationToken);
+            return new ApplyHoldResult(ApplyHoldOutcome.DuplicateApplication);
+        }
+
+        var occupiedSeats = await _dbContext.Holds.CountAsync(
+            h => h.ClassId == classId
+                && (h.Status == HoldStatus.Held || h.Status == HoldStatus.Confirmed),
+            cancellationToken);
+
+        if (occupiedSeats >= totalSeats)
+        {
+            await transaction.CommitAsync(cancellationToken);
+            return new ApplyHoldResult(ApplyHoldOutcome.ClassFull);
+        }
+
+        var holdId = Guid.NewGuid();
+
+        try
+        {
+            await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO admission_holds
+                    (id, class_id, student_id, status, expires_at, created_at, updated_at)
+                VALUES
+                    ({holdId}, {classId}, {studentId}, 'HELD',
+                     now() + {_holdDurationSeconds} * interval '1 second', now(), now())
+                """,
+                cancellationToken);
+        }
+        catch (PostgresException exception) when (
+            exception.SqlState == PostgresErrorCodes.UniqueViolation
+            && exception.ConstraintName == AdmissionHoldConfiguration.ActiveApplicationIndexName)
+        {
+            // The class lock normally makes this unreachable; the index is the final backstop.
+            return new ApplyHoldResult(ApplyHoldOutcome.DuplicateApplication);
+        }
+
+        var hold = await _dbContext.Holds
+            .AsNoTracking()
+            .Where(h => h.Id == holdId)
+            .Select(h => new HoldResponse(h.Id, h.ClassId, h.StudentId, h.Status, h.ExpiresAt))
+            .SingleAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return new ApplyHoldResult(ApplyHoldOutcome.Created, hold);
+    }
+}
