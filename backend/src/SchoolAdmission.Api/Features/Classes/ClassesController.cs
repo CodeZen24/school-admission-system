@@ -44,7 +44,7 @@ public sealed class ClassesController(IClassesService classesService) : Controll
         return Ok(classes);
     }
 
-    [HttpGet("{classId:guid}")]
+    [HttpGet("{classId}")]
     [ProducesResponseType<ClassDetailsResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
