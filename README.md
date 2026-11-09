@@ -86,6 +86,19 @@ npm run build --prefix frontend
 
 The concurrency suite sends 50 concurrent reservation requests to a class with five seats. It verifies that exactly five requests succeed and that PostgreSQL never records more occupied seats than the class capacity.
 
+## Manual check before submission
+
+After `docker compose up --build` finishes, open `http://localhost:3000` and work through this list:
+
+1. Enter a valid 17-digit student ID, create a class, and confirm that it appears with the correct seat count.
+2. Apply for a seat. Confirm that the held and available counts change, a countdown appears, and the application is listed below.
+3. Click **Confirm / Pay Fee**, then click it again. The application should stay confirmed and the confirmed count should not increase twice.
+4. Create a second class, apply, then cancel. Confirm that its seat becomes available again. Try cancelling a confirmed application and confirm that the UI shows a clear conflict message.
+5. Change the student ID. The previous student's applications should disappear. Change back and confirm that the history returns.
+6. Create a class with one seat. In another browser profile or a second browser, use a different student ID and try to apply at the same time. Only one request should succeed.
+7. Set `HOLD_DURATION_SECONDS=10` in `.env`, rebuild with `docker compose up --build`, create a hold, wait for the countdown to finish, and confirm that the seat is released without refreshing the page.
+8. Create a class or hold, run `docker compose down`, then run `docker compose up` again. Confirm that the data is still there. Use `docker compose down -v` only after this check if you want to reset the database.
+
 ## Troubleshooting
 
 - If a port is already in use, change `BACKEND_PORT`, `FRONTEND_PORT`, or `POSTGRES_PORT` in `.env` and restart Compose.
